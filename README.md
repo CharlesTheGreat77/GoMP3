@@ -1,4 +1,3 @@
-# GoMP3
 <div align="center">
   <img src="assets/logo.png" alt="GoMP3" />
   <h1><strong>GoMP3</strong></h1>
