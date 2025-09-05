@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoMP3 - Audio Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg-dark: hsl(210, 8%, 11%); /* Near-black base */
+            --color-bg-light: hsl(210, 8%, 15%);
+            --color-accent: hsl(140, 40%, 30%); /* Muted green for subtle fade */
+            --color-text-light: hsl(210, 5%, 90%);
+            --frosted-bg: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--color-bg-dark) 0%, var(--color-bg-dark) 70%, var(--color-accent) 100%);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        main {
+            flex: 1 0 auto; /* Ensure main takes available space */
+        }
+
+        .card-3d {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-3d:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-accent {
+            background-color: var(--color-accent);
+            color: var(--color-bg-dark);
+            font-weight: 600;
+            transition: transform 0.2s ease, filter 0.5s ease;
+        }
+
+        .btn-accent:hover {
+            transform: scale(1.05);
+        }
+        
+        .btn-secondary {
+            background-color: var(--color-bg-light);
+            color: var(--color-text-light);
+            font-weight: 600;
+            transition: background-color 0.2s ease, filter 0.5s ease;
+        }
+        
+        .btn-secondary:hover {
+            background-color: hsl(210, 8%, 20%);
+        }
+
+        .hero-3d {
+            perspective: 1200px;
+        }
+        .hero-3d h1 {
+            transform: translateZ(50px);
+            transition: transform 0.5s ease;
+        }
+        .hero-3d p {
+            transform: translateZ(20px);
+            transition: transform 0.5s ease;
+        }
+
+        /* Frosted glass effect for result cells and footer */
+        .frosted-card {
+            background: var(--frosted-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .frosted-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        footer {
+            flex-shrink: 0;
+            padding: 1rem 0;
+        }
+
+        /* Hide default file input */
+        #fileInput {
+            display: none;
+        }
+
+        /* Loading Animation */
+        .processing {
+            animation: pulse-hue 1.5s infinite ease-in-out;
+            cursor: progress;
+        }
+        @keyframes pulse-hue {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(180deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100">
+    <main>
+        <section class="relative hero-3d text-center py-12 px-4 md:py-20">
+            <div class="relative z-10 text-white w-full max-w-3xl mx-auto">
+                <h1 class="text-3xl md:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight">
+                    Your Music, Instant.
+                </h1>
+                <p class="text-lg md:text-xl font-light mb-4 text-gray-400">
+                    Effortlessly convert YouTube and SoundCloud to high-quality MP3 files.
+                </p>
+                <p class="text-sm text-gray-500 mb-8">
+                    Use of this service must comply with the Terms of Service of the source platform (e.g., YouTube, SoundCloud). Only download content you have permission to use.
+                </p>
+
+                <!-- Input and Buttons -->
+                <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 w-full">
+                    <input type="text" id="urlInput" placeholder="Paste YouTube or SoundCloud link here..." class="flex-grow w-full sm:w-auto p-4 rounded-full card-3d text-gray-100" style="background-color: var(--color-bg-light);">
+                    <label for="fileInput" id="fileLabel" class="w-full sm:w-auto font-semibold py-4 px-8 rounded-full btn-secondary card-3d cursor-pointer">
+                        Upload URLs
+                    </label>
+                    <input type="file" id="fileInput" accept=".txt">
+                    <button id="pasteBtn" class="w-full sm:w-auto font-semibold py-4 px-8 rounded-full btn-secondary card-3d">
+                        Paste
+                    </button>
+                    <button id="processBtn" class="w-full sm:w-auto font-semibold py-4 px-8 rounded-full btn-accent card-3d">
+                        Process
+                    </button>
+                </div>
+                <!-- Results Section -->
+                <div id="results" class="mt-8"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="frosted-card text-center" style="background-color: var(--frosted-bg);">
+        <p class="text-gray-400 text-sm">&copy; 2025 GoMP3. All rights reserved.</p>
+    </footer>
+
+    <script>
+    // Paste button functionality
+    document.getElementById('pasteBtn').addEventListener('click', async () => {
+        try {
+            if (!navigator.clipboard || !navigator.clipboard.readText) {
+                alert('Clipboard API not supported in this browser. Please paste the URL manually.');
+                return;
+            }
+            const text = await navigator.clipboard.readText();
+            document.getElementById('urlInput').value = text.trim();
+        } catch (err) {
+            console.error('Failed to read clipboard:', err);
+            alert('Failed to access clipboard. Please paste the URL manually.');
+        }
+    });
+    
+    // Update the file upload button label when a file is selected
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        const fileName = e.target.files[0] ? e.target.files[0].name : 'Upload URLs';
+        document.getElementById('fileLabel').textContent = fileName;
+    });
+
+    // Process button functionality
+    document.getElementById('processBtn').addEventListener('click', async () => {
+        const urlInput = document.getElementById('urlInput').value.trim();
+        const fileInput = document.getElementById('fileInput').files[0];
+        const resultsDiv = document.getElementById('results');
+        const processBtn = document.getElementById('processBtn');
+        const pasteBtn = document.getElementById('pasteBtn');
+        const fileLabel = document.getElementById('fileLabel');
+        const originalProcessText = 'Process';
+        const processingTexts = ['Processing...', 'Please wait...'];
+        let textIndex = 0;
+        let processingInterval;
+        let es;
+        let fileCount = 0;
+
+        resultsDiv.innerHTML = ''; // Clear previous results
+        const urlRegex = /^(https?:\/\/)(www\.)?(youtube\.com|youtu\.be|soundcloud\.com|on\.soundcloud\.com)\/.+$/;
+
+        let urls = [];
+        if (urlInput) {
+            if (!urlRegex.test(urlInput)) {
+                alert('Please enter a valid YouTube or SoundCloud URL.');
+                return;
+            }
+            urls.push(urlInput);
+        }
+
+        if (fileInput) {
+            const text = await fileInput.text();
+            const fileUrls = text.split('\n').map(url => url.trim()).filter(url => url && urlRegex.test(url));
+            urls = [...urls, ...fileUrls];
+        }
+
+        if (urls.length === 0) {
+            alert('Please provide at least one valid URL or a text file with URLs.');
+            return;
+        }
+
+        processBtn.disabled = true;
+        processBtn.classList.add('processing');
+        pasteBtn.disabled = true;
+        fileLabel.classList.add('processing');
+        processingInterval = setInterval(() => {
+            processBtn.textContent = processingTexts[textIndex];
+            textIndex = (textIndex + 1) % processingTexts.length;
+        }, 1000); // Change text every 1 second
+
+        try {
+            const response = await fetch('/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ urls: urls }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || `HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const sessionID = data.sessionId;
+
+            es = new EventSource(`/progress/${sessionID}`);
+
+            es.addEventListener('file', (e) => {
+                const file = JSON.parse(e.data);
+                fileCount++;
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'flex items-center space-x-4 p-4 frosted-card my-2';
+                fileDiv.style.background = `linear-gradient(to right, rgba(0, 0, 0, 0.5), var(--frosted-bg)), url('${file.thumbnail}') left center / 50% no-repeat`;
+                fileDiv.innerHTML = `
+                    <img src="${file.thumbnail}" alt="${file.title}" class="w-16 h-16 object-cover rounded-lg">
+                    <div class="flex-grow">
+                        <p class="text-sm font-semibold text-white">${file.title}</p>
+                        <p class="text-xs text-gray-400">${file.extractor}</p>
+                    </div>
+                    <button class="download-btn font-semibold py-2 px-4 rounded-full btn-accent card-3d" data-url="${file.downloadUrl}">
+                        Download
+                    </button>
+                `;
+                resultsDiv.appendChild(fileDiv);
+            });
+
+            es.addEventListener('zip', (e) => {
+                const zipUrl = JSON.parse(e.data);
+                const zipDiv = document.createElement('div');
+                zipDiv.className = 'mt-4';
+                zipDiv.innerHTML = `
+                    <button class="download-zip-btn font-semibold py-2 px-6 rounded-full btn-accent card-3d" data-url="${zipUrl}">
+                        Download All as ZIP
+                    </button>
+                `;
+                resultsDiv.appendChild(zipDiv);
+            });
+
+            es.addEventListener('done', () => {
+                es.close();
+                if (fileCount === 0) {
+                    alert('No files were processed successfully.');
+                }
+                resetUI();
+            });
+
+            es.onerror = (err) => {
+                console.error('SSE error:', err);
+                alert('An error occurred during processing.');
+                if (es) es.close();
+                resetUI();
+            };
+        } catch (err) {
+            console.error('Process error:', err);
+            alert(`Failed to process files: ${err.message}. Please check the URLs and try again.`);
+            resetUI();
+        }
+
+        function resetUI() {
+            clearInterval(processingInterval);
+            processBtn.textContent = originalProcessText;
+            processBtn.disabled = false;
+            processBtn.classList.remove('processing');
+            pasteBtn.disabled = false;
+            fileLabel.classList.remove('processing');
+        }
+    });
+
+    // Handle individual download buttons
+    document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('download-btn')) {
+            const downloadUrl = e.target.getAttribute('data-url');
+            try {
+                const response = await fetch(downloadUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const disposition = response.headers.get('Content-Disposition');
+                let filename = 'audio.mp3';
+                if (disposition && disposition.includes('filename=')) {
+                    filename = disposition.split('filename=')[1].replace(/"/g, '');
+                }
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (err) {
+                console.error('Download error:', err);
+                alert(`Failed to download file: ${err.message}.`);
+            }
+        }
+    });
+
+    // Handle ZIP download button
+    document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('download-zip-btn')) {
+            const zipUrl = e.target.getAttribute('data-url');
+            try {
+                const response = await fetch(zipUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = 'songs.zip';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (err) {
+                console.error('ZIP download error:', err);
+                alert(`Failed to download ZIP: ${err.message}.`);
+            }
+        }
+    });
+    </script>
+</body>
+</html>
